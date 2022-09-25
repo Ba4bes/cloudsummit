@@ -1,0 +1,65 @@
+# Place this file in the folder .github/workflows
+
+name: 04DeployToAzure
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the "main" branch
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+env:
+  resourceGroupName: DeployRG-1
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "deploy"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: build the template
+        run: az bicep build --file '03Improved_pipeline/StorageAccount.bicep'
+
+  deploy_to_dev:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3      
+      - name: Azure Login
+        uses: Azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          enable-AzPSSession: true
+
+      - name: law
+        id: law
+        uses: Azure/arm-deploy@v1
+        with:
+          scope: resourcegroup
+          resourceGroupName: ${{ env.resourceGroupName }}
+          template: '04multiple_resources/bicep_modules/loganalytics.bicep'
+          parameters: workspaceName=cs-workspace-01
+          deploymentName: "ghdev${{github.run_id}}"
+      
+      - name: appservice
+        id: appservice
+        uses: Azure/arm-deploy@v1
+        with:
+          scope: resourcegroup
+          resourceGroupName: ${{ env.resourceGroupName }}
+          template: '04multiple_resources/bicep_modules/appservice.bicep'
+          parameters: appServicePlanName=appService environment=production
+          deploymentName: "ghdev${{github.run_id}}"  
+      - run: echo ${{steps.appservice.outputs.appServiceName}}
+      - run: echo ${{steps.law.outputs.workspaceName}}
+      - name: app
+        uses: Azure/arm-deploy@v1
+        with:
+          scope: resourcegroup
+          resourceGroupName: ${{ env.resourceGroupName }}
+          template: '04multiple_resources/bicep_modules/app.bicep'
+          parameters: webAppName=appservice0123 appServicePlanName=${{steps.appservice.outputs.appServiceName}} workspaceName=${{steps.law.outputs.workspaceName}} environment=production
+          deploymentName: "ghdev${{github.run_id}}"  

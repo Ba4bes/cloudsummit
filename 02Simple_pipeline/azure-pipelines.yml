@@ -1,0 +1,25 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+  - none
+  
+pool:
+    vmImage: ubuntu-latest
+  
+steps:
+  - task: AzureResourceManagerTemplateDeployment@3
+    name: deploy
+    inputs:
+      deploymentScope: 'Resource Group'
+      azureResourceManagerConnection: 'AzureConnection'
+      subscriptionId: '71818d77-4e18-47c8-8c36-b7af11e60bde'
+      action: 'Create Or Update Resource Group'
+      resourceGroupName: 'DeployRG-1'
+      location: 'West Europe'
+      templateLocation: 'Linked artifact'
+      csmFile: '02Simple_pipeline/StorageAccount.bicep'
+      overrideParameters: '-storageAccountPrefix "cloudsummit"'
+      deploymentMode: 'Incremental'

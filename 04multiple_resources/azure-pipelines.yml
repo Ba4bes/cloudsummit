@@ -1,0 +1,76 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+  - none
+
+variables:
+- name: resourcegroupName
+  value: DeployRG-1
+  
+pool:
+  vmImage: ubuntu-latest
+
+  
+steps:
+  - task: AzureResourceManagerTemplateDeployment@3
+    name: keyvault
+    inputs:
+      deploymentScope: 'Resource Group'
+      azureResourceManagerConnection: 'AzureConnection'
+      subscriptionId: '71818d77-4e18-47c8-8c36-b7af11e60bde'
+      action: 'Create Or Update Resource Group'
+      resourceGroupName: '$(resourcegroupName)'
+      location: 'West Europe'
+      templateLocation: 'Linked artifact'
+      csmFile: '04multiple_resources/bicep_modules/keyvault.bicep'
+      overrideParameters: '-keyVaultName cs-keyvault-011'
+      deploymentMode: 'Incremental'
+
+
+  - task: AzureResourceManagerTemplateDeployment@3
+    name: LAW
+    inputs:
+      deploymentScope: 'Resource Group'
+      azureResourceManagerConnection: 'AzureConnection'
+      subscriptionId: '71818d77-4e18-47c8-8c36-b7af11e60bde'
+      action: 'Create Or Update Resource Group'
+      resourceGroupName: '$(resourcegroupName)'
+      location: 'West Europe'
+      templateLocation: 'Linked artifact'
+      csmFile: '04multiple_resources/bicep_modules/loganalytics.bicep'
+      overrideParameters: '-workspaceName cs-workspace-01'
+      deploymentMode: 'Incremental'
+      deploymentOutputs: 'logoutput'
+      
+  - task: AzureResourceManagerTemplateDeployment@3
+    name: APPService
+    inputs:
+      deploymentScope: 'Resource Group'
+      azureResourceManagerConnection: 'AzureConnection'
+      subscriptionId: '71818d77-4e18-47c8-8c36-b7af11e60bde'
+      action: 'Create Or Update Resource Group'
+      resourceGroupName: '$(resourcegroupName)'
+      location: 'West Europe'
+      templateLocation: 'Linked artifact'
+      csmFile: '04multiple_resources/bicep_modules/appservice.bicep'
+      overrideParameters: '-appServicePlanName appService -environment production'
+      deploymentMode: 'Incremental'
+      deploymentOutputs: 'appserviceoutput'
+
+  - task: AzureResourceManagerTemplateDeployment@3
+    name: App
+    inputs:
+      deploymentScope: 'Resource Group'
+      azureResourceManagerConnection: 'AzureConnection'
+      subscriptionId: '71818d77-4e18-47c8-8c36-b7af11e60bde'
+      action: 'Create Or Update Resource Group'
+      resourceGroupName: '$(resourcegroupName)'
+      location: 'West Europe'
+      templateLocation: 'Linked artifact'
+      csmFile: '04multiple_resources/bicep_modules/app.bicep'
+      overrideParameters: |
+        -webAppName appservice0123 -appServicePlanName $(appserviceoutput.appServiceName.value) -workspaceName $(logoutput.workspaceName.value) -environment production
+      deploymentMode: 'Incremental'
