@@ -61,6 +61,6 @@ stages:
             resourceGroupName: '$(resourcegroupName)'
             location: 'West Europe'
             templateLocation: 'Linked artifact'
-            csmFile: '03Improved_pipeline/StorageAccount.bicep'
+            csmFile: '$(Build.SourcesDirectory)/StorageAccount.bicep'
             overrideParameters: '-storageAccountPrefix "csTest"'
             deploymentMode: 'Incremental'
