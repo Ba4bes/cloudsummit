@@ -61,6 +61,6 @@ stages:
             resourceGroupName: '$(resourcegroupName)'
             location: 'West Europe'
             templateLocation: 'Linked artifact'
-            csmFile: '$(Build.SourcesDirectory)/StorageAccount.json'
+            csmFile: '$(Build.SourcesDirectory)finishedTemplates/StorageAccount.json'
             overrideParameters: '-storageAccountPrefix "csTest"'
             deploymentMode: 'Incremental'
